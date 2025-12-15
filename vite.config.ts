@@ -6,6 +6,8 @@ import tailwindcss from '@tailwindcss/vite';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, '.', '');
   return {
+    // GitHub Pages用のbase設定（本番環境のみ）
+    base: mode === 'production' ? '/O2-Calc/' : '/',
     server: {
       port: 3000,
       host: '0.0.0.0',
