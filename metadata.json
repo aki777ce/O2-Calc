@@ -1,0 +1,5 @@
+{
+  "name": "Oxygen Calc",
+  "description": "A medical utility app to quickly calculate remaining oxygen tank duration for 500L and 1500L cylinders based on pressure and flow rate.",
+  "requestFramePermissions": []
+}
