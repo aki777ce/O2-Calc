@@ -8,34 +8,30 @@ interface VolumeSelectorProps {
 
 export const VolumeSelector: React.FC<VolumeSelectorProps> = ({ selectedVolume, onChange }) => {
   const options: { value: TankVolume; label: string }[] = [
-    { value: 500, label: '500L (小型・搬送用)' },
+    { value: 500, label: '500L (小型)' },
     { value: 1500, label: '1500L (中型)' },
-    { value: 2000, label: '2000L' },
-    { value: 3000, label: '3000L' },
   ];
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-bold text-gray-700">
-        ボンベの種類 (満タン時の容量)
-      </label>
-      <div className="relative">
-        <select
-          value={selectedVolume}
-          onChange={(e) => onChange(Number(e.target.value) as TankVolume)}
-          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-base font-medium appearance-none"
-        >
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </select>
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
+      <div className="flex justify-between items-center px-1">
+        <label className="text-[13px] font-black text-gray-600 tracking-tight">
+          ボンベ容量 <span className="text-[10px] font-bold text-gray-400 ml-1">(満タン容量)</span>
+        </label>
+      </div>
+      <div className="grid grid-cols-2 gap-1 bg-gray-100 p-1 rounded-xl">
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            onClick={() => onChange(opt.value)}
+            className={`py-2 text-xs font-black rounded-lg transition-all ${selectedVolume === opt.value
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-500'
+              }`}
+          >
+            {opt.label}
+          </button>
+        ))}
       </div>
     </div>
   );
