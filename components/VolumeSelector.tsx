@@ -7,37 +7,35 @@ interface VolumeSelectorProps {
 }
 
 export const VolumeSelector: React.FC<VolumeSelectorProps> = ({ selectedVolume, onChange }) => {
+  const options: { value: TankVolume; label: string }[] = [
+    { value: 500, label: '500L (小型・搬送用)' },
+    { value: 1500, label: '1500L (中型)' },
+    { value: 2000, label: '2000L' },
+    { value: 3000, label: '3000L' },
+  ];
+
   return (
-    <div>
-      <label className="block text-sm font-bold text-gray-600 mb-3 tracking-wide">ボンベ容量</label>
-      <div className="grid grid-cols-2 gap-4">
-        <button
-          onClick={() => onChange('1500')}
-          className={`relative p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-center gap-3 shadow-sm hover:shadow-md ${
-            selectedVolume === '1500' 
-              ? 'border-[#0056D2] bg-blue-50/50 text-[#0056D2] ring-1 ring-[#0056D2] ring-offset-1' 
-              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-          }`}
+    <div className="space-y-2">
+      <label className="block text-sm font-bold text-gray-700">
+        ボンベの種類 (満タン時の容量)
+      </label>
+      <div className="relative">
+        <select
+          value={selectedVolume}
+          onChange={(e) => onChange(Number(e.target.value) as TankVolume)}
+          className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-base font-medium appearance-none"
         >
-          <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${selectedVolume === '1500' ? 'border-[#0056D2]' : 'border-gray-400'}`}>
-            {selectedVolume === '1500' && <div className="w-2.5 h-2.5 rounded-full bg-[#0056D2]" />}
-          </div>
-          <span className="font-bold text-lg">1500L</span>
-        </button>
-        
-        <button
-          onClick={() => onChange('500')}
-          className={`relative p-4 rounded-xl border-2 transition-all duration-200 flex items-center justify-center gap-3 shadow-sm hover:shadow-md ${
-            selectedVolume === '500' 
-              ? 'border-[#0056D2] bg-blue-50/50 text-[#0056D2] ring-1 ring-[#0056D2] ring-offset-1' 
-              : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
-          }`}
-        >
-          <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${selectedVolume === '500' ? 'border-[#0056D2]' : 'border-gray-400'}`}>
-            {selectedVolume === '500' && <div className="w-2.5 h-2.5 rounded-full bg-[#0056D2]" />}
-          </div>
-          <span className="font-bold text-lg">500L</span>
-        </button>
+          {options.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </div>
     </div>
   );

@@ -1,4 +1,6 @@
-export type TankVolume = '500' | '1500';
+export type TankVolume = 500 | 1500 | 2000 | 3000;
+
+export type InputMode = 'pressure' | 'volume';
 
 export enum SafetyStatus {
   SAFE = 'SAFE',
@@ -8,5 +10,6 @@ export enum SafetyStatus {
 
 export interface CalculationResult {
   minutes: number;
+  oxygenConsumption: number;
   status: SafetyStatus;
 }

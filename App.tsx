@@ -1,93 +1,127 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { VolumeSelector } from './components/VolumeSelector';
-import { SliderInput } from './components/SliderInput';
+import { NumericInput } from './components/NumericInput';
+import { ToggleSwitch } from './components/ToggleSwitch';
 import { ResultDisplay } from './components/ResultDisplay';
-import { TankVolume, SafetyStatus } from './types';
-
-// Constants
-const TANK_CAPACITY_PER_MPA = {
-  '1500': 100, // 1500L / 15MPa = 100 L/MPa
-  '500': 500 / 15 // ~33.33 L/MPa
-};
-
-const THRESHOLD_DANGER = 20;
-const THRESHOLD_WARNING = 30;
+import { TankVolume, InputMode, SafetyStatus } from './types';
 
 function App() {
-  const [volume, setVolume] = useState<TankVolume>('1500');
-  const [pressure, setPressure] = useState<number>(15);
-  const [flow, setFlow] = useState<number>(2);
+  const [fio2, setFio2] = useState<number>(70);
+  const [totalFlow, setTotalFlow] = useState<number>(40);
+  const [inputMode, setInputMode] = useState<InputMode>('pressure');
+  const [volume, setVolume] = useState<TankVolume>(500);
+  const [pressure, setPressure] = useState<number>(10);
+  const [currentLiters, setCurrentLiters] = useState<number>(0);
 
-  const { minutes, status } = useMemo(() => {
-    if (flow <= 0) return { minutes: 0, status: SafetyStatus.DANGER };
+  const [result, setResult] = useState<{ minutes: number; consumption: number; status: SafetyStatus } | null>(null);
 
-    const capacityPerMPa = TANK_CAPACITY_PER_MPA[volume];
-    const remainingVolume = pressure * capacityPerMPa;
-    const calcMinutes = Math.floor(remainingVolume / flow);
+  const calculate = () => {
+    // Oxygen consumption logic
+    // FiO2 = (O2 + 0.21 * (Total - O2)) / Total
+    // FiO2 * Total - 0.21 * Total = 0.79 * O2
+    // O2 = (FiO2/100 - 0.21) * Total / 0.79
+    const o2Consumption = ((fio2 / 100) - 0.21) * totalFlow / 0.79;
 
-    let calcStatus = SafetyStatus.SAFE;
-    if (calcMinutes < THRESHOLD_DANGER) {
-      calcStatus = SafetyStatus.DANGER;
-    } else if (calcMinutes <= THRESHOLD_WARNING) {
-      calcStatus = SafetyStatus.WARNING;
+    let remainingVolume = 0;
+    if (inputMode === 'pressure') {
+      // Assuming 14.7 MPa is full for the conversion
+      remainingVolume = (pressure / 14.7) * volume;
+    } else {
+      remainingVolume = currentLiters;
     }
 
-    return { minutes: calcMinutes, status: calcStatus };
-  }, [volume, pressure, flow]);
+    if (o2Consumption <= 0) {
+      setResult({ minutes: 0, consumption: 0, status: SafetyStatus.DANGER });
+      return;
+    }
+
+    const minutes = Math.floor(remainingVolume / o2Consumption);
+
+    let status = SafetyStatus.SAFE;
+    if (minutes < 20) {
+      status = SafetyStatus.DANGER;
+    } else if (minutes <= 30) {
+      status = SafetyStatus.WARNING;
+    }
+
+    setResult({ minutes, consumption: o2Consumption, status });
+  };
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] pb-12 font-sans text-gray-800">
+    <div className="min-h-screen bg-gray-50 pb-12 font-sans text-gray-800">
       <Header />
 
       <main className="px-4 -mt-10 relative z-10">
-        <section className="max-w-[900px] mx-auto bg-white rounded-3xl shadow-xl border border-gray-100 p-6 md:p-10">
-          
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch pt-2">
-            {/* Input Section */}
-            <div className="lg:col-span-7 space-y-10">
-              
-              <VolumeSelector selectedVolume={volume} onChange={setVolume} />
+        <section className="max-w-[600px] mx-auto bg-white rounded-3xl shadow-2xl border border-gray-100 p-8 md:p-10 space-y-8">
 
-              <div className="space-y-8 p-1">
-                <SliderInput 
-                  label="ボンベ圧力計 (MPa)"
-                  value={pressure}
-                  min={1}
-                  max={15}
-                  unit="MPa"
-                  accentColor="#0056D2"
-                  onChange={setPressure}
-                  marks={[1, 5, 10, 15]}
-                />
+          <NumericInput
+            label="① 酸素濃度 (FiO₂ %)"
+            value={fio2}
+            onChange={setFio2}
+            placeholder="例: 70"
+            min={21}
+            max={100}
+          />
 
-                <SliderInput 
-                  label="酸素流量 (L/分)"
-                  value={flow}
-                  min={1}
-                  max={30}
-                  unit="L/分"
-                  accentColor="#00C2CB"
-                  onChange={setFlow}
-                  marks={[1, 10, 20, 30]}
-                />
-              </div>
+          <NumericInput
+            label="② トータルフロー (L/min)"
+            value={totalFlow}
+            onChange={setTotalFlow}
+            placeholder="例: 40"
+            min={1}
+            max={80}
+          />
 
-            </div>
+          <ToggleSwitch
+            label="③ ボンベ残量の入力方法を選択"
+            value={inputMode}
+            onChange={(mode) => {
+              setInputMode(mode);
+              setResult(null);
+            }}
+          />
 
-            {/* Result Section */}
-            <div className="lg:col-span-5 flex flex-col">
-              <ResultDisplay minutes={minutes} status={status} />
-              
-              <div className={`mt-4 transition-all duration-500 overflow-hidden ${volume === '500' ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
-                <div className="bg-gray-50 rounded-lg p-3 text-center border border-gray-100">
-                  <p className="text-xs text-gray-500">
-                    ※ 500Lボンベは通常、最大流量が10L/分程度に設定されています。
-                  </p>
-                </div>
-              </div>
-            </div>
+          <div className="space-y-6 pt-2 border-t border-gray-50">
+            <VolumeSelector selectedVolume={volume} onChange={setVolume} />
+
+            {inputMode === 'pressure' ? (
+              <NumericInput
+                label="現在の圧力 (MPa)"
+                value={pressure}
+                onChange={setPressure}
+                unit="MPa"
+                placeholder="例: 10"
+                helpText="※満タンは約14.7MPa"
+              />
+            ) : (
+              <NumericInput
+                label="現在の残量 (L)"
+                value={currentLiters}
+                onChange={setCurrentLiters}
+                unit="L"
+                placeholder="例: 300"
+              />
+            )}
           </div>
+
+          <button
+            onClick={calculate}
+            className="w-full py-4 bg-[#002B6B] hover:bg-[#001F4D] text-white font-bold rounded-xl transition-all shadow-lg active:scale-[0.98] text-lg mt-4"
+          >
+            計算する
+          </button>
+
+          <ResultDisplay
+            minutes={result?.minutes || 0}
+            oxygenConsumption={result?.consumption || 0}
+            status={result?.status || SafetyStatus.SAFE}
+            calculated={!!result}
+          />
+
+          <p className="text-[10px] text-gray-400 text-center">
+            ※ 14.7MPaを満タンとして計算しています。
+          </p>
 
         </section>
       </main>
